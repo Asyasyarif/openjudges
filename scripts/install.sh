@@ -114,7 +114,7 @@ detect_shell_and_config() {
 
     if [ -n "${ZSH_VERSION:-}" ] || [[ "$SHELL" == *"zsh"* ]]; then
         shell_name="zsh"
-        # Try multiple zsh config locations
+        XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
         for file in "$HOME/.zshrc" "$HOME/.zshenv" "$XDG_CONFIG_HOME/zsh/.zshrc" "$XDG_CONFIG_HOME/zsh/.zshenv"; do
             if [ -f "$file" ]; then
                 config_file="$file"
@@ -126,7 +126,7 @@ detect_shell_and_config() {
 
     elif [ -n "${BASH_VERSION:-}" ] || [[ "$SHELL" == *"bash"* ]]; then
         shell_name="bash"
-        # Try multiple bash config locations
+        XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
         for file in "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile" "$XDG_CONFIG_HOME/bash/.bashrc"; do
             if [ -f "$file" ]; then
                 config_file="$file"
