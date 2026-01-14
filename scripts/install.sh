@@ -11,6 +11,7 @@ BINARY_NAME="openjudges"
 REPO="Asyasyarif/openjudges"
 INSTALL_MODE=${INSTALL_MODE:-"user"}  # Default: user mode
 REQUESTED_VERSION=${VERSION:-""}
+INCLUDE_PRERELEASE=false
 
 # Colors
 BLUE='\033[0;34m'
@@ -47,6 +48,10 @@ while [[ $# -gt 0 ]]; do
                 exit 1
             fi
             ;;
+        --prerelease|--pre)
+            INCLUDE_PRERELEASE=true
+            shift
+            ;;
         --help|-h)
             cat <<EOF
 ${GREEN}openjudges Installer${NC}
@@ -57,11 +62,13 @@ ${BLUE}Usage:${NC}
 ${BLUE}Options:${NC}
   --system       Install to /usr/local/bin (requires sudo, system-wide)
   --version V    Install specific version (e.g., v1.2.0)
+  --prerelease   Include pre-release versions when fetching latest
   --help, -h     Show this help message
 
 ${BLUE}Examples:${NC}
   curl -fsSL https://raw.githubusercontent.com/Asyasyarif/openjudges/main/scripts/install.sh | bash
   ./install.sh --version v1.2.0
+  ./install.sh --prerelease
   sudo ./install.sh --system
 
 ${BLUE}Default:${NC}
@@ -271,7 +278,16 @@ if [ -n "$REQUESTED_VERSION" ]; then
     fi
 else
     echo -e "${BLUE}==>${NC} Fetching latest version info..."
-    LATEST_RELEASE=$(curl -s https://api.github.com/repos/${REPO}/releases/latest 2>/dev/null | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' || echo "")
+    if [ "$INCLUDE_PRERELEASE" = true ]; then
+        # Get all releases including pre-releases, take the first one
+        LATEST_RELEASE=$(curl -s https://api.github.com/repos/${REPO}/releases 2>/dev/null | grep '"tag_name":' | head -n1 | sed -E 's/.*"([^"]+)".*/\1/' || echo "")
+        if [ -n "$LATEST_RELEASE" ]; then
+            echo -e "${BLUE}==>${NC} Including pre-releases..."
+        fi
+    else
+        # Get only stable releases (excludes pre-releases)
+        LATEST_RELEASE=$(curl -s https://api.github.com/repos/${REPO}/releases/latest 2>/dev/null | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' || echo "")
+    fi
 fi
 
 if [ -z "$LATEST_RELEASE" ]; then
