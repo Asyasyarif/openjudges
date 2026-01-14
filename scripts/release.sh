@@ -33,19 +33,47 @@ do
     GOARCH=${platform_split[1]}
     GOARM=${platform_split[2]:-""}
     
-    output_name="${BINARY_NAME}_${GOOS}-${GOARCH}"
+    target="${GOOS}-${GOARCH}"
     if [ -n "$GOARM" ]; then
-        output_name="${BINARY_NAME}_${GOOS}-armv${GOARM}"
+        target="${GOOS}-armv${GOARM}"
     fi
+    
+    binary_name="$BINARY_NAME"
     if [ $GOOS = "windows" ]; then
-        output_name+='.exe'
+        binary_name="${BINARY_NAME}.exe"
     fi
-
-    echo "Building $output_name..."
-    if [ -n "$GOARM" ]; then
-        GOOS=$GOOS GOARCH=$GOARCH GOARM=$GOARM go build -o "$DIST_DIR/$output_name" ./main.go
+    
+    archive_name="${BINARY_NAME}_${target}"
+    
+    # Determine archive extension
+    if [ $GOOS = "windows" ] || [ $GOOS = "darwin" ]; then
+        archive_ext=".zip"
     else
-        GOOS=$GOOS GOARCH=$GOARCH go build -o "$DIST_DIR/$output_name" ./main.go
+        archive_ext=".tar.gz"
+    fi
+    
+    archive_file="${archive_name}${archive_ext}"
+    
+    echo "Building ${archive_file}..."
+    
+    # Build binary
+    if [ -n "$GOARM" ]; then
+        GOOS=$GOOS GOARCH=$GOARCH GOARM=$GOARM go build -o "$DIST_DIR/$binary_name" ./main.go
+    else
+        GOOS=$GOOS GOARCH=$GOARCH go build -o "$DIST_DIR/$binary_name" ./main.go
+    fi
+    
+    # Create archive
+    if [ "$archive_ext" = ".zip" ]; then
+        cd "$DIST_DIR"
+        zip -q "$archive_file" "$binary_name"
+        rm "$binary_name"
+        cd "$PROJECT_ROOT"
+    else
+        cd "$DIST_DIR"
+        tar -czf "$archive_file" "$binary_name"
+        rm "$binary_name"
+        cd "$PROJECT_ROOT"
     fi
 done
 

@@ -140,9 +140,24 @@ detect_shell_and_config() {
         config_file="$HOME/.config/fish/config.fish"
         mkdir -p "$(dirname "$config_file")"
         [ ! -f "$config_file" ] && touch "$config_file"
+    elif [[ "$SHELL" == *"ash"* ]] || [ "$(basename "$SHELL" 2>/dev/null)" = "ash" ]; then
+        shell_name="ash"
+        for file in "$HOME/.ashrc" "$HOME/.profile" "/etc/profile"; do
+            if [ -f "$file" ]; then
+                config_file="$file"
+                break
+            fi
+        done
+        [ -z "$config_file" ] && config_file="$HOME/.profile"
     else
         shell_name="sh"
-        config_file="$HOME/.profile"
+        for file in "$HOME/.ashrc" "$HOME/.profile" "/etc/profile"; do
+            if [ -f "$file" ]; then
+                config_file="$file"
+                break
+            fi
+        done
+        [ -z "$config_file" ] && config_file="$HOME/.profile"
     fi
 
     echo "$shell_name|$config_file"
@@ -158,19 +173,34 @@ add_to_path() {
     local shell_name="$3"
 
     # Check if already in PATH
-    if [[ ":$PATH:" != *":$install_dir:"* ]]; then
+    if [[ ":$PATH:" == *":$install_dir:"* ]]; then
+        return 1
+    fi
+    
+    # Check if command already exists in config file
+    local path_command=""
+        if [ "$shell_name" = "fish" ]; then
+            path_command="fish_add_path $install_dir"
+        elif [ "$shell_name" = "ash" ] || [ "$shell_name" = "sh" ]; then
+            path_command="export PATH=\"\$PATH:$install_dir\""
+        else
+            path_command="export PATH=\"\$PATH:$install_dir\""
+        fi
+    
+    # Check if command already exists in file
+    if [ -f "$config_file" ] && grep -Fxq "$path_command" "$config_file" 2>/dev/null; then
+        return 1
+    fi
+    
+    # Add to config file
+    if [ -w "$config_file" ] || [ ! -f "$config_file" ]; then
         echo "" >> "$config_file"
         echo "# openjudges - Auto-added by installer on $(date)" >> "$config_file"
-
-        if [ "$shell_name" = "fish" ]; then
-            echo "fish_add_path $install_dir" >> "$config_file"
-        else
-            echo "export PATH=\"\$PATH:$install_dir\"" >> "$config_file"
-        fi
-
+        echo "$path_command" >> "$config_file"
         return 0
+    else
+        return 1
     fi
-    return 1
 }
 
 # ============================================
@@ -304,21 +334,67 @@ check_existing_version
 # Download & Install
 # ============================================
 
-# Construct download URL
-BINARY_FILENAME="${BINARY_NAME}_${TARGET}"
-[ "$OS" = "windows" ] && BINARY_FILENAME="${BINARY_FILENAME}.exe"
+# Determine archive extension based on OS
+if [ "$OS" = "windows" ] || [ "$OS" = "darwin" ]; then
+    ARCHIVE_EXT=".zip"
+else
+    ARCHIVE_EXT=".tar.gz"
+fi
 
-DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${LATEST_RELEASE}/${BINARY_FILENAME}"
+# Check required tools
+if [ "$ARCHIVE_EXT" = ".tar.gz" ]; then
+    if ! command -v tar >/dev/null 2>&1; then
+        echo -e "${RED}Error:${NC} 'tar' is required but not installed."
+        exit 1
+    fi
+else
+    if ! command -v unzip >/dev/null 2>&1; then
+        echo -e "${RED}Error:${NC} 'unzip' is required but not installed."
+        exit 1
+    fi
+fi
+
+# Construct download URL
+ARCHIVE_FILENAME="${BINARY_NAME}_${TARGET}${ARCHIVE_EXT}"
+DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${LATEST_RELEASE}/${ARCHIVE_FILENAME}"
 
 # Create temp directory
 TMP_DIR=$(mktemp -d || { echo -e "${RED}Error:${NC} Failed to create temp directory"; exit 1; })
+ARCHIVE_PATH="${TMP_DIR}/${ARCHIVE_FILENAME}"
 TMP_BIN="${TMP_DIR}/${BINARY_NAME}"
+[ "$OS" = "windows" ] && TMP_BIN="${TMP_BIN}.exe"
 
-# Download
-echo -e "${BLUE}==>${NC} Downloading ${BINARY_FILENAME}..."
-if ! curl -# -L "$DOWNLOAD_URL" -o "$TMP_BIN" 2>/dev/null; then
-    echo -e "${RED}Error:${NC} Download failed"
-    echo -e "${BLUE}==>${NC} URL: ${DOWNLOAD_URL}"
+# Download with progress
+echo -e "${BLUE}==>${NC} Downloading ${ARCHIVE_FILENAME}..."
+
+# Use curl progress bar if TTY, otherwise silent
+if [ -t 2 ]; then
+    # Show progress bar for TTY
+    if ! curl -# -L "$DOWNLOAD_URL" -o "$ARCHIVE_PATH"; then
+        echo -e "\n${RED}Error:${NC} Download failed"
+        echo -e "${BLUE}==>${NC} URL: ${DOWNLOAD_URL}"
+        exit 1
+    fi
+else
+    # Silent download for non-TTY (pipes, scripts)
+    if ! curl -s -L "$DOWNLOAD_URL" -o "$ARCHIVE_PATH"; then
+        echo -e "${RED}Error:${NC} Download failed"
+        echo -e "${BLUE}==>${NC} URL: ${DOWNLOAD_URL}"
+        exit 1
+    fi
+fi
+
+# Extract archive
+echo -e "${BLUE}==>${NC} Extracting archive..."
+if [ "$ARCHIVE_EXT" = ".tar.gz" ]; then
+    tar -xzf "$ARCHIVE_PATH" -C "$TMP_DIR"
+else
+    unzip -q "$ARCHIVE_PATH" -d "$TMP_DIR"
+fi
+
+# Verify binary exists
+if [ ! -f "$TMP_BIN" ]; then
+    echo -e "${RED}Error:${NC} Binary not found in archive"
     exit 1
 fi
 
@@ -326,10 +402,13 @@ fi
 chmod +x "$TMP_BIN"
 
 # Install
+BINARY_INSTALL_NAME="$BINARY_NAME"
+[ "$OS" = "windows" ] && BINARY_INSTALL_NAME="${BINARY_NAME}.exe"
+
 if [ "$INSTALL_MODE" = "user" ]; then
     mkdir -p "$INSTALL_DIR"
     echo -e "${BLUE}==>${NC} Installing to ${INSTALL_DIR}..."
-    if ! mv "$TMP_BIN" "${INSTALL_DIR}/${BINARY_NAME}"; then
+    if ! mv "$TMP_BIN" "${INSTALL_DIR}/${BINARY_INSTALL_NAME}"; then
         echo -e "${RED}Error:${NC} Failed to move binary to ${INSTALL_DIR}"
         exit 1
     fi
@@ -349,14 +428,26 @@ if [ "$INSTALL_MODE" = "user" ]; then
     else
         echo -e "${GREEN}✓${NC} Already in PATH"
     fi
+    
+    # GitHub Actions support
+    if [ -n "${GITHUB_ACTIONS:-}" ] && [ "${GITHUB_ACTIONS}" = "true" ]; then
+        echo "$INSTALL_DIR" >> "$GITHUB_PATH"
+        echo -e "${GREEN}✓${NC} Added ${INSTALL_DIR} to \$GITHUB_PATH"
+    fi
 else
     echo -e "${BLUE}==>${NC} Installing to ${INSTALL_DIR} (requires sudo)..."
     mkdir -p "$INSTALL_DIR"
-    if sudo mv "$TMP_BIN" "${INSTALL_DIR}/${BINARY_NAME}"; then
+    if sudo mv "$TMP_BIN" "${INSTALL_DIR}/${BINARY_INSTALL_NAME}"; then
         echo -e "${GREEN}✓${NC} Successfully installed ${BINARY_NAME}!"
     else
         echo -e "${RED}Error:${NC} Failed to move binary to ${INSTALL_DIR}"
         exit 1
+    fi
+    
+    # GitHub Actions support
+    if [ -n "${GITHUB_ACTIONS:-}" ] && [ "${GITHUB_ACTIONS}" = "true" ]; then
+        echo "$INSTALL_DIR" >> "$GITHUB_PATH"
+        echo -e "${GREEN}✓${NC} Added ${INSTALL_DIR} to \$GITHUB_PATH"
     fi
 fi
 
