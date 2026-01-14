@@ -19,6 +19,9 @@ OpenJudges is a powerful, interactive CLI tool for evaluating Large Language Mod
 # Install latest version (user mode, auto PATH setup, no sudo required)
 curl -fsSL https://raw.githubusercontent.com/Asyasyarif/openjudges/main/scripts/install.sh | bash
 
+# Install pre-release version
+curl -fsSL https://raw.githubusercontent.com/Asyasyarif/openjudges/main/scripts/install.sh | bash -s -- --prerelease
+
 # Install specific version
 curl -fsSL https://raw.githubusercontent.com/Asyasyarif/openjudges/main/scripts/install.sh | bash -s -- --version v1.2.0
 
