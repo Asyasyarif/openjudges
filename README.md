@@ -2,6 +2,10 @@
 
 OpenJudges is a powerful, interactive CLI tool for evaluating Large Language Models (LLMs) using other LLMs as judges. It helps you automate the process of testing and benchmarking model performance on your specific datasets.
 
+![Preview](https://raw.githubusercontent.com/Asyasyarif/openjudges/main/preview.png)
+
+
+
 ## Features
 
 - **Interactive TUI**: A beautiful, terminal-based user interface for managing judges, running evaluations, and analyzing results.
