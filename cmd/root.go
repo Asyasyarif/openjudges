@@ -9,10 +9,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/xuri/excelize/v2"
 
-	"openllmjudge/config"
-	"openllmjudge/internal/styles"
-	"openllmjudge/internal/tui/root"
-	"openllmjudge/internal/utils"
+	"openjudges/config"
+	"openjudges/internal/styles"
+	"openjudges/internal/tui/root"
+	"openjudges/internal/utils"
 )
 
 var (
@@ -22,12 +22,12 @@ var (
 
 // rootCmd represents the base command
 var rootCmd = &cobra.Command{
-	Use:   "openllmjudge",
+	Use:   "openjudges",
 	Short: "LLM as a Judge - Evaluate AI responses",
-	Long:  `OpenLLMJudge uses Large Language Models to evaluate AI responses against criteria.`,
+	Long:  `OpenJudges uses Large Language Models to evaluate AI responses against criteria.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if showVersion {
-			fmt.Printf("openllmjudge %s\n", version)
+			fmt.Printf("openjudges %s\n", version)
 			return
 		}
 		showInteractiveMenu()

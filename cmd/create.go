@@ -8,8 +8,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 
-	"openllmjudge/config"
-	"openllmjudge/internal/tui/create"
+	"openjudges/config"
+	"openjudges/internal/tui/create"
 )
 
 // LLM Provider and Model configurations
@@ -41,15 +41,15 @@ var createCmd = &cobra.Command{
 
 Examples:
   # Interactive mode
-  openllmjudge create
+  openjudges create
 
   # Non-interactive mode (all flags)
-  openllmjudge create --name my-judge --provider openai --model gpt-5.2 \
+  openjudges create --name my-judge --provider openai --model gpt-5.2 \
     --dataset datasets/testcases.csv \
     --result results/my-judge.json
 
   # Partial flags (prompts for missing)
-  openllmjudge create --name my-judge --provider anthropic`,
+  openjudges create --name my-judge --provider anthropic`,
 	RunE: runCreate,
 }
 

@@ -3,8 +3,8 @@ package list
 import (
 	"fmt"
 
-	"openllmjudge/config"
-	"openllmjudge/internal/styles"
+	"openjudges/config"
+	"openjudges/internal/styles"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"

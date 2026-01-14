@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"openllmjudge/internal/tui/test"
+	"openjudges/internal/tui/test"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"

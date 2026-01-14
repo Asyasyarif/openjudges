@@ -1,7 +1,7 @@
 package components
 
 import (
-	"openllmjudge/internal/styles"
+	"openjudges/internal/styles"
 	"os"
 
 	"github.com/charmbracelet/lipgloss"
@@ -52,7 +52,7 @@ func RenderHeader(width int) string {
 	tagline := lipgloss.NewStyle().
 		Bold(true).
 		Foreground(styles.Gray).
-		Render("OpenLLMJudges uses LLM (Large Language Models) to evaluate AI responses against criteria.")
+		Render("OpenJudges uses LLMs as judges to evaluate AI responses against criteria.")
 
 	cwd, _ := os.Getwd()
 	pathLine := styles.DimStyle.Faint(true).Render(cwd)

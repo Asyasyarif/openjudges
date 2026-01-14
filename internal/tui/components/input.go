@@ -7,7 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"openllmjudge/internal/styles"
+	"openjudges/internal/styles"
 )
 
 // Input is a reusable text input component

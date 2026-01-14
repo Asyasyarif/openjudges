@@ -13,10 +13,11 @@ go.work
 apikeys.json
 config/apikeys.json
 
-.openllmjudge/
+.openjudges/
 /datasets
 /results
 /datasets
 /vendors
 /build
 /prompts
+/dist

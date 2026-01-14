@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"openllmjudge/testcase"
+	"openjudges/testcase"
 )
 
 // PromptTemplate represents a loaded prompt template

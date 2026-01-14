@@ -11,9 +11,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"openllmjudge/internal/styles"
-	"openllmjudge/internal/tui/components"
-	"openllmjudge/testcase"
+	"openjudges/internal/styles"
+	"openjudges/internal/tui/components"
+	"openjudges/testcase"
 )
 
 type State int

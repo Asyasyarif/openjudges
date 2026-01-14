@@ -1,8 +1,8 @@
 package vendor
 
 import (
-	"openllmjudge/config"
-	"openllmjudge/internal/tui/components"
+	"openjudges/config"
+	"openjudges/internal/tui/components"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"

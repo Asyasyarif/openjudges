@@ -2,9 +2,9 @@ package create
 
 import (
 	"fmt"
-	"openllmjudge/config"
-	"openllmjudge/internal/tui/components"
-	"openllmjudge/judge"
+	"openjudges/config"
+	"openjudges/internal/tui/components"
+	"openjudges/judge"
 	"os"
 	"path/filepath"
 
@@ -88,7 +88,7 @@ func NewModel(existing *config.JudgeConfig) Model {
 	}
 
 	// Add custom providers from config
-	cfg, err := config.Load(filepath.Join(os.Getenv("HOME"), ".openllmjudge", "config.json"))
+	cfg, err := config.Load(filepath.Join(os.Getenv("HOME"), ".openjudges", "config.json"))
 	if err == nil {
 		for _, p := range cfg.CustomProviders {
 			providers = append(providers, components.SimpleSelectItem{

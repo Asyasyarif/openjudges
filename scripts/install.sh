@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ============================================
-# OpenLLMJudge Installer
+# openjudges Installer
 # Zero-config, multi-platform, auto-update ready
 # ============================================
 
@@ -22,7 +22,7 @@ NC='\033[0m'
 
 # Set install directory based on mode
 if [ "$INSTALL_MODE" = "user" ]; then
-    INSTALL_DIR="$HOME/.openllmjudge/bin"
+    INSTALL_DIR="$HOME/.openjudges/bin"
 else
     INSTALL_DIR="/usr/local/bin"
 fi
@@ -49,7 +49,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         --help|-h)
             cat <<EOF
-${GREEN}OpenLLMJudge Installer${NC}
+${GREEN}openjudges Installer${NC}
 
 ${BLUE}Usage:${NC}
   install.sh [options]
@@ -65,7 +65,7 @@ ${BLUE}Examples:${NC}
   sudo ./install.sh --system
 
 ${BLUE}Default:${NC}
-  Installs to ~/.openllmjudge/bin (user-level, no sudo required)
+  Installs to ~/.openjudges/bin (user-level, no sudo required)
   Automatically adds to PATH and configures shell
 
 ${BLUE}Supported Platforms:${NC}
@@ -153,7 +153,7 @@ add_to_path() {
     # Check if already in PATH
     if [[ ":$PATH:" != *":$install_dir:"* ]]; then
         echo "" >> "$config_file"
-        echo "# OpenLLMJudge - Auto-added by installer on $(date)" >> "$config_file"
+        echo "# openjudges - Auto-added by installer on $(date)" >> "$config_file"
 
         if [ "$shell_name" = "fish" ]; then
             echo "fish_add_path $install_dir" >> "$config_file"

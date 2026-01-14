@@ -1,9 +1,9 @@
 package runner
 
 import (
-	"openllmjudge/config"
-	"openllmjudge/judge"
-	"openllmjudge/testcase"
+	"openjudges/config"
+	"openjudges/judge"
+	"openjudges/testcase"
 )
 
 // Define message types for the run TUI

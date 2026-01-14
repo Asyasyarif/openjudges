@@ -2,8 +2,8 @@ package root
 
 import (
 	"fmt"
-	"openllmjudge/internal/styles"
-	"openllmjudge/internal/tui/components"
+	"openjudges/internal/styles"
+	"openjudges/internal/tui/components"
 
 	"github.com/charmbracelet/lipgloss"
 )

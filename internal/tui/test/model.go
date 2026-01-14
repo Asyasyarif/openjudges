@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"openllmjudge/internal/styles"
-	"openllmjudge/internal/tui/components"
+	"openjudges/internal/styles"
+	"openjudges/internal/tui/components"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"

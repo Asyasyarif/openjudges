@@ -1,10 +1,14 @@
 #!/bin/bash
 
 # Build script for multiple platforms
-BINARY_NAME="openllmjudge"
-VERSION=${1:-"v1.0.0"} # Default version or from first argument
-DIST_DIR="dist"
+BINARY_NAME="openjudges"
+VERSION=${1:-"v0.0.1"} # Default version or from first argument
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$PROJECT_ROOT"
+
+DIST_DIR="dist"
 mkdir -p $DIST_DIR
 
 platforms=(
@@ -12,6 +16,14 @@ platforms=(
     "darwin/arm64"
     "linux/amd64"
     "linux/arm64"
+    "linux/arm/7"
+    "linux/arm/6"
+    "windows/amd64"
+    "windows/386"
+    "freebsd/amd64"
+    "freebsd/arm64"
+    "netbsd/amd64"
+    "openbsd/amd64"
 )
 
 for platform in "${platforms[@]}"
@@ -19,14 +31,22 @@ do
     platform_split=(${platform//\// })
     GOOS=${platform_split[0]}
     GOARCH=${platform_split[1]}
+    GOARM=${platform_split[2]:-""}
     
-    output_name="${BINARY_NAME}_${GOOS}_${GOARCH}"
+    output_name="${BINARY_NAME}_${GOOS}-${GOARCH}"
+    if [ -n "$GOARM" ]; then
+        output_name="${BINARY_NAME}_${GOOS}-armv${GOARM}"
+    fi
     if [ $GOOS = "windows" ]; then
         output_name+='.exe'
     fi
 
     echo "Building $output_name..."
-    GOOS=$GOOS GOARCH=$GOARCH go build -o "$DIST_DIR/$output_name" ./main.go
+    if [ -n "$GOARM" ]; then
+        GOOS=$GOOS GOARCH=$GOARCH GOARM=$GOARM go build -o "$DIST_DIR/$output_name" ./main.go
+    else
+        GOOS=$GOOS GOARCH=$GOARCH go build -o "$DIST_DIR/$output_name" ./main.go
+    fi
 done
 
 echo "Build complete! Artifacts are in $DIST_DIR/"

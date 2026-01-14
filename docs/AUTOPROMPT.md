@@ -16,10 +16,10 @@ Automatically test, analyze, and improve prompts using AI agents.
 
 ```bash
 # Interactive TUI
-openllmjudge auto-prompt
+openjudges auto-prompt
 
 # Direct mode
-openllmjudge auto-prompt --judge=<name> --config=<name>
+openjudges auto-prompt --judge=<name> --config=<name>
 ```
 
 ## Configuration

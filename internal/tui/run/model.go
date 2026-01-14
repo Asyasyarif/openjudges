@@ -13,13 +13,13 @@ import (
 	"github.com/charmbracelet/lipgloss/tree"
 	"github.com/gen2brain/beeep"
 
-	"openllmjudge/config"
-	"openllmjudge/internal/runner"
-	"openllmjudge/internal/styles"
-	"openllmjudge/internal/tui/components"
-	"openllmjudge/internal/vendor"
-	"openllmjudge/judge"
-	"openllmjudge/testcase"
+	"openjudges/config"
+	"openjudges/internal/runner"
+	"openjudges/internal/styles"
+	"openjudges/internal/tui/components"
+	"openjudges/internal/vendor"
+	"openjudges/judge"
+	"openjudges/testcase"
 )
 
 // Step represents the current step in the run flow
@@ -63,7 +63,7 @@ func sendCompletionNotification(totalTests, passed, failed int, duration time.Du
 
 	// Desktop notification (goroutine to avoid blocking)
 	go func() {
-		title := "OpenLLMJudge - Complete"
+		title := "OpenJudges - Complete"
 		message := fmt.Sprintf(
 			"Completed %d tests in %.2fs\nPassed: %d | Failed: %d",
 			totalTests, duration.Seconds(), passed, failed,

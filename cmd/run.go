@@ -6,10 +6,10 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 
-	"openllmjudge/config"
-	"openllmjudge/internal/runner"
-	"openllmjudge/internal/styles"
-	"openllmjudge/internal/tui/run"
+	"openjudges/config"
+	"openjudges/internal/runner"
+	"openjudges/internal/styles"
+	"openjudges/internal/tui/run"
 )
 
 var (
@@ -25,16 +25,16 @@ var runCmd = &cobra.Command{
 
 Examples:
   # Run specific judge
-  openllmjudge run my-judge
+  openjudges run my-judge
 
   # Run multiple judges
-  openllmjudge run judge1 judge2
+  openjudges run judge1 judge2
 
   # Run all judges
-  openllmjudge run --all
+  openjudges run --all
 
   # Override delay/jitter
-  openllmjudge run --delay 2000 --jitter 1000`,
+  openjudges run --delay 2000 --jitter 1000`,
 	RunE: runRun,
 }
 

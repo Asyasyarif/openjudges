@@ -2,8 +2,8 @@ package vendor
 
 import (
 	"encoding/json"
-	"openllmjudge/config"
-	"openllmjudge/internal/styles"
+	"openjudges/config"
+	"openjudges/internal/styles"
 
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"

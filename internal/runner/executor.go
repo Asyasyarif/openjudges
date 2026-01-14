@@ -11,11 +11,11 @@ import (
 	"sync"
 	"time"
 
-	"openllmjudge/config"
-	"openllmjudge/internal/export"
-	"openllmjudge/internal/vendor"
-	"openllmjudge/judge"
-	"openllmjudge/testcase"
+	"openjudges/config"
+	"openjudges/internal/export"
+	"openjudges/internal/vendor"
+	"openjudges/judge"
+	"openjudges/testcase"
 )
 
 // Event represents a runner event

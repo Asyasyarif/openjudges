@@ -9,7 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"openllmjudge/testcase"
+	"openjudges/testcase"
 	"os"
 	"regexp"
 	"strconv"

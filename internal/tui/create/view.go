@@ -2,7 +2,7 @@ package create
 
 import (
 	"fmt"
-	"openllmjudge/internal/styles"
+	"openjudges/internal/styles"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"

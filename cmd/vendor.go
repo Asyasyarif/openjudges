@@ -7,8 +7,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 
-	"openllmjudge/config"
-	"openllmjudge/internal/tui/vendor"
+	"openjudges/config"
+	"openjudges/internal/tui/vendor"
 )
 
 var vendorCmd = &cobra.Command{

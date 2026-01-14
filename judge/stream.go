@@ -13,7 +13,7 @@ import (
 	"github.com/openai/openai-go/packages/param"
 	"github.com/openai/openai-go/shared"
 
-	"openllmjudge/internal/tools"
+	"openjudges/internal/tools"
 )
 
 // TokenType represents the type of streaming token

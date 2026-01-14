@@ -3,9 +3,9 @@ package vendor
 import (
 	"encoding/json"
 	"fmt"
-	"openllmjudge/config"
-	"openllmjudge/internal/tui/components"
-	vendorpkg "openllmjudge/internal/vendor"
+	"openjudges/config"
+	"openjudges/internal/tui/components"
+	vendorpkg "openjudges/internal/vendor"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"

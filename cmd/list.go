@@ -8,9 +8,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 
-	"openllmjudge/config"
-	"openllmjudge/internal/tui/create"
-	"openllmjudge/internal/tui/list"
+	"openjudges/config"
+	"openjudges/internal/tui/create"
+	"openjudges/internal/tui/list"
 )
 
 var (

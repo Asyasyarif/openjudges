@@ -1,4 +1,4 @@
-module openllmjudge
+module openjudges
 
 go 1.24.3
 

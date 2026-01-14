@@ -50,7 +50,7 @@ func GetVendorsDir() string {
 	// 5. Check home directory for installed binaries
 	homeDir, _ := os.UserHomeDir()
 	if homeDir != "" {
-		paths = append(paths, filepath.Join(homeDir, ".openllmjudge", "vendors"))
+		paths = append(paths, filepath.Join(homeDir, ".openjudges", "vendors"))
 	}
 
 	for _, path := range paths {

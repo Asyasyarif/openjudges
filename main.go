@@ -4,7 +4,7 @@ import (
 	"os"
 	"strings"
 
-	"openllmjudge/cmd"
+	"openjudges/cmd"
 )
 
 func main() {

@@ -23,7 +23,7 @@ type APIKeysConfig struct {
 }
 
 // LoadAPIKeys loads API keys from centralized storage.
-// Searches in order: .apikeys.json (local), ~/.openllmjudge/apikeys.json (user home),
+// Searches in order: .apikeys.json (local), ~/.openjudges/apikeys.json (user home),
 // returns empty struct if not found.
 func LoadAPIKeys() (*APIKeys, error) {
 	localPath := ".apikeys.json"
@@ -33,7 +33,7 @@ func LoadAPIKeys() (*APIKeys, error) {
 
 	homeDir, err := os.UserHomeDir()
 	if err == nil {
-		configPath := filepath.Join(homeDir, ".openllmjudge", "apikeys.json")
+		configPath := filepath.Join(homeDir, ".openjudges", "apikeys.json")
 		if _, err := os.Stat(configPath); err == nil {
 			return loadAPIKeysFromFile(configPath)
 		}

@@ -3,8 +3,8 @@ package cmd
 import (
 	"fmt"
 
-	"openllmjudge/config"
-	"openllmjudge/internal/tui/autoprompt"
+	"openjudges/config"
+	"openjudges/internal/tui/autoprompt"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
@@ -21,8 +21,8 @@ var autopromptCmd = &cobra.Command{
 5. Repeats until all tests pass or max iterations reached
 
 Examples:
-  openllmjudge auto-prompt                        # Interactive TUI mode
-  openllmjudge auto-prompt --judge=gpt-4 --config=production  # Direct run`,
+  openjudges auto-prompt                        # Interactive TUI mode
+  openjudges auto-prompt --judge=gpt-4 --config=production  # Direct run`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := config.Load(configPath)
 		if err != nil {

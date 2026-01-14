@@ -7,7 +7,7 @@ import (
 
 	"github.com/xuri/excelize/v2"
 
-	"openllmjudge/testcase"
+	"openjudges/testcase"
 )
 
 // ExportData holds all data needed for Excel export

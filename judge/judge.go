@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"strings"
 
-	"openllmjudge/config"
-	"openllmjudge/testcase"
+	"openjudges/config"
+	"openjudges/testcase"
 
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"

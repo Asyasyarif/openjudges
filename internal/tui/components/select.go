@@ -8,7 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"openllmjudge/internal/styles"
+	"openjudges/internal/styles"
 )
 
 // SelectItem represents an item in the select list

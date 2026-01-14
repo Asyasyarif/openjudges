@@ -1,4 +1,4 @@
-# OpenLLMJudge
+# OpenJudges
 
 OpenJudges is a powerful, interactive CLI tool for evaluating Large Language Models (LLMs) using other LLMs as judges. It helps you automate the process of testing and benchmarking model performance on your specific datasets.
 
@@ -44,53 +44,53 @@ go install github.com/asyasyarif/openjudges@latest
 
 ```bash
 # Check for and install updates
-openllmjudge update
+openjudges update
 
 # Check only without installing
-openllmjudge update --check-only
+openjudges update --check-only
 
 # Include pre-release versions
-openllmjudge update --prerelease
+openjudges update --prerelease
 ```
 
 ## Quick Start
 
 1.  **Initialize**:
-    Run `openllmjudge` to start the interactive main menu.
+    Run `openjudges` to start the interactive main menu.
 
 2.  **Configure API Keys**:
-    Use `openllmjudge apikeys` to set your LLM provider API keys.
+    Use `openjudges apikeys` to set your LLM provider API keys.
     ```bash
-    openllmjudge apikeys --set openai --key sk-...
+    openjudges apikeys --set openai --key sk-...
     ```
 
 3.  **Create a Judge**:
     Use the interactive wizard to create a new judge:
     ```bash
-    openllmjudge create
+    openjudges create
     ```
     Or use flags:
     ```bash
-    openllmjudge create --name "MyJudge" --provider openai --model gpt-4o --dataset datasets/test.csv --result results/out.json
+    openjudges create --name "MyJudge" --provider openai --model gpt-4o --dataset datasets/test.csv --result results/out.json
     ```
 
 4.  **Run Evaluations**:
     Run your configured judges:
     ```bash
-    openllmjudge run --all
+    openjudges run --all
     ```
     Or select specific judges interactively via the CLI menu.
 
 5.  **View Results**:
     Browse and analyze evaluation results:
     ```bash
-    openllmjudge results
+    openjudges results
     ```
 
 ## Development
 
 -   **Build**: `go build`
--   **Run**: `./openllmjudge`
+-   **Run**: `./openjudges`
 
 ## License
 

@@ -2,8 +2,8 @@ package create
 
 import (
 	"fmt"
-	"openllmjudge/config"
-	"openllmjudge/internal/tui/components"
+	"openjudges/config"
+	"openjudges/internal/tui/components"
 	"os"
 	"path/filepath"
 	"strings"
@@ -176,7 +176,7 @@ func (m Model) submit() (tea.Model, tea.Cmd) {
 	m.Answers.DataPath = m.InputData.Value()
 
 	// If it's a custom provider, copy its details
-	cfg, err := config.Load(filepath.Join(os.Getenv("HOME"), ".openllmjudge", "config.json"))
+	cfg, err := config.Load(filepath.Join(os.Getenv("HOME"), ".openjudges", "config.json"))
 	if err == nil {
 		for _, p := range cfg.CustomProviders {
 			if p.Provider == m.Answers.LLM.Provider {
@@ -242,7 +242,7 @@ func (m *Model) initModelStep() {
 		}
 	default:
 		// Check if it's a custom provider
-		cfg, err := config.Load(filepath.Join(os.Getenv("HOME"), ".openllmjudge", "config.json"))
+		cfg, err := config.Load(filepath.Join(os.Getenv("HOME"), ".openjudges", "config.json"))
 		if err == nil {
 			for _, p := range cfg.CustomProviders {
 				if p.Provider == m.Answers.LLM.Provider {

@@ -10,10 +10,10 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"openllmjudge/config"
-	"openllmjudge/internal/styles"
-	"openllmjudge/internal/tui/components"
-	"openllmjudge/judge"
+	"openjudges/config"
+	"openjudges/internal/styles"
+	"openjudges/internal/tui/components"
+	"openjudges/judge"
 )
 
 type Step int

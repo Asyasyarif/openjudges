@@ -2,7 +2,7 @@ package components
 
 import (
 	"fmt"
-	"openllmjudge/internal/styles"
+	"openjudges/internal/styles"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
