@@ -4,45 +4,38 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
+	bubbletea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
-// Mode represents the current state of the root TUI
 type Mode int
 
 const (
 	ModeBlank Mode = iota
+	ModeInitializing
 	ModeCommand
 )
 
-// CommandSuggestion represents a command with a description
 type CommandSuggestion struct {
 	Name        string
 	Description string
 }
 
-// Model holds the state for the root TUI
 type Model struct {
-	Mode        Mode
-	Input       textinput.Model
-	Width       int
-	Height      int
-	Suggestions []CommandSuggestion
-	Filtered    []CommandSuggestion
-	Selected    int
-	Quitting    bool
-	ExecutedCmd string // Command to execute after TUI exits
+	Mode         Mode
+	Input        textinput.Model
+	Width        int
+	Height       int
+	Suggestions  []CommandSuggestion
+	Filtered     []CommandSuggestion
+	Selected     int
+	Quitting     bool
+	ExecutedCmd  string
+	InitMessages []string
+	InitComplete bool
 }
 
-// NewModel creates a new root model
 func NewModel() Model {
-	ti := textinput.New()
-	ti.Placeholder = "Type a command or '/' to show all menu"
-	ti.Prompt = "► "
-	ti.CharLimit = 50
-	ti.Width = 100
-
-	// Default suggestions
 	suggestions := []CommandSuggestion{
 		{Name: "create", Description: "Create a new judge configuration"},
 		{Name: "run", Description: "Run an evaluation task"},
@@ -53,33 +46,42 @@ func NewModel() Model {
 		{Name: "quit", Description: "Exit the application"},
 	}
 
+	// Create input with prompt and placeholder
+	ti := textinput.New()
+	ti.Prompt = "> "
+	ti.Placeholder = "Type command or press /"
+	ti.PlaceholderStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+	ti.Width = 50
+	ti.Focus()
+
 	return Model{
-		Mode:        ModeBlank,
-		Input:       ti,
-		Suggestions: suggestions,
-		Filtered:    nil, // Start with no suggestions visible
+		Mode:         ModeBlank,
+		Input:        ti,
+		Suggestions:  suggestions,
+		Filtered:     nil,
+		InitMessages: []string{},
+		InitComplete: false,
 	}
 }
 
-// Init initializes the model
-func (m Model) Init() tea.Cmd {
+func (m Model) Init() bubbletea.Cmd {
 	return textinput.Blink
 }
 
-// FilterSuggestions filters the suggestion list based on input
+func (m *Model) initializeProject() {
+}
+
 func (m *Model) FilterSuggestions(val string) {
 	if val == "" {
 		m.Filtered = nil
 		return
 	}
 
-	// Clean input: trim spaces and leading slash
 	clean := strings.TrimSpace(val)
 	search := strings.ToLower(strings.TrimPrefix(clean, "/"))
 	search = strings.TrimSpace(search)
 
 	if search == "" {
-		// If just "/", show all
 		if strings.HasPrefix(val, "/") {
 			m.Filtered = m.Suggestions
 		} else {
@@ -90,13 +92,11 @@ func (m *Model) FilterSuggestions(val string) {
 
 	var filtered []CommandSuggestion
 	for _, s := range m.Suggestions {
-		// All suggestions are lowercase in model init
 		if strings.HasPrefix(strings.ToLower(s.Name), search) {
 			filtered = append(filtered, s)
 		}
 	}
 
-	// Contextual suggestions for /vendor subcommands
 	if strings.HasPrefix("vendor create", search) && search != "vendor create" {
 		filtered = append(filtered, CommandSuggestion{Name: "vendor create", Description: "Create a new custom vendor"})
 	}
@@ -104,13 +104,10 @@ func (m *Model) FilterSuggestions(val string) {
 		filtered = append(filtered, CommandSuggestion{Name: "vendor list", Description: "List all saved custom vendors"})
 	}
 
-	// If the user hasn't typed anything else after "vendor", show sub-commands as options
 	if search == "vendor" {
-		// Check if not already added by prefix (it should be, but let's be explicit and put them first or second)
 		filtered = append(filtered, CommandSuggestion{Name: "vendor create", Description: "Create a new custom vendor"})
 		filtered = append(filtered, CommandSuggestion{Name: "vendor list", Description: "List all saved custom vendors"})
 	}
-
 	m.Filtered = filtered
-	m.Selected = 0 // Reset selection
+	m.Selected = 0
 }

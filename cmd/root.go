@@ -15,6 +15,11 @@ import (
 	"openjudges/internal/utils"
 )
 
+// clearScreen clears the terminal screen
+func clearScreen() {
+	fmt.Print("\033[2J\033[H")
+}
+
 var (
 	configFile  string
 	showVersion bool
@@ -30,13 +35,13 @@ var rootCmd = &cobra.Command{
 			fmt.Printf("openjudges %s\n", version)
 			return
 		}
+		InitializeProject(true)
 		showInteractiveMenu()
 	},
 }
 
 // Execute runs the root command
 func Execute() error {
-	InitializeProject()
 	return rootCmd.Execute()
 }
 
@@ -57,14 +62,27 @@ func init() {
 }
 
 // InitializeProject ensures all required directories and files exist
-func InitializeProject() {
+func InitializeProject(verbose bool) {
 	// Ensure required directories exist
+	if verbose {
+		fmt.Printf("%s\n", styles.InfoBoxStyle.Render("ℹ Initializing project structure..."))
+		fmt.Printf("%s\n", styles.InfoBoxStyle.Render("📁 Creating required directories..."))
+	}
 	os.MkdirAll("datasets", 0755)
 	os.MkdirAll("results", 0755)
 	os.MkdirAll("prompts", 0755)
 	os.MkdirAll("vendors", 0755)
+	if verbose {
+		fmt.Printf("  ✓ datasets/ - for test data and master files\n")
+		fmt.Printf("  ✓ results/ - for evaluation results\n")
+		fmt.Printf("  ✓ prompts/ - for judge prompt templates\n")
+		fmt.Printf("  ✓ vendors/ - for custom LLM vendor configurations\n\n")
+	}
 
 	// Create default config if it doesn't exist
+	if verbose {
+		fmt.Printf("%sn", styles.InfoBoxStyle.Render("📄 Creating default configuration..."))
+	}
 	if _, err := os.Stat(configFile); os.IsNotExist(err) {
 		defaultCfg := &config.Config{
 			Judges: []config.JudgeConfig{},
@@ -74,11 +92,17 @@ func InitializeProject() {
 			},
 		}
 		config.SaveConfig(defaultCfg, configFile)
+		if verbose {
+			fmt.Printf("  ✓ %s - main configuration file\n\n", configFile)
+		}
 	}
 
 	// Sample prompt creation moved to standard location
 
 	// Create sample prompt if it doesn't exist
+	if verbose {
+		fmt.Printf("%sn", styles.InfoBoxStyle.Render("📝 Creating sample judge prompt..."))
+	}
 	if _, err := os.Stat("prompts/judges_prompt_dont_change.md"); os.IsNotExist(err) {
 		samplePrompt := `# Expert AI Response Evaluator
 
@@ -222,6 +246,12 @@ Provide your evaluation in the following JSON structure:
 IMPORTANT: The "overall_score" MUST be between 0 and 100. If the quality is 9/10, output 90.0.
 `
 		os.WriteFile("prompts/judges_prompt_dont_change.md", []byte(samplePrompt), 0644)
+		if verbose {
+			fmt.Printf("  ✓ prompts/judges_prompt_dont_change.md - default evaluation promptnn")
+		}
+	}
+	if verbose {
+		fmt.Printf("%sn", styles.InfoBoxStyle.Render("🔌 Creating sample vendor configurations..."))
 	}
 
 	// Create sample vendor files if they don't exist
@@ -239,6 +269,9 @@ IMPORTANT: The "overall_score" MUST be between 0 and 100. If the quality is 9/10
   "guardrail": []
 }`
 		os.WriteFile("vendors/example-vendor-get.json", []byte(sampleGet), 0644)
+		if verbose {
+			fmt.Printf("  ✓ vendors/example-vendor-get.json - GET request examplen")
+		}
 	}
 
 	if _, err := os.Stat("vendors/example-vendor-post.json"); os.IsNotExist(err) {
@@ -261,11 +294,23 @@ IMPORTANT: The "overall_score" MUST be between 0 and 100. If the quality is 9/10
   "guardrail": []
 }`
 		os.WriteFile("vendors/example-vendor-post.json", []byte(samplePost), 0644)
+		if verbose {
+			fmt.Printf("  ✓ vendors/example-vendor-post.json - POST request example\n")
+		}
 	}
 
 	// Create sample master_data.xlsx if it doesn't exist
 	if _, err := os.Stat("datasets/master_data.xlsx"); os.IsNotExist(err) {
+		if verbose {
+			fmt.Printf("%sn", styles.InfoBoxStyle.Render("📊 Creating sample test data..."))
+		}
+		if verbose {
+			fmt.Printf("  ✓ datasets/master_data.xlsx - sample evaluation datasetnn")
+		}
 		createSampleMasterData()
+		if verbose {
+			fmt.Printf("%sn", styles.SuccessBoxStyle.Render("✓ Project initialization complete!"))
+		}
 	}
 }
 
@@ -303,7 +348,7 @@ func showInteractiveMenu() {
 
 // HandleSlashCommand processes slash commands from TUI or args
 func HandleSlashCommand(command string, args []string) {
-	InitializeProject()
+	clearScreen()
 	switch strings.ToLower(command) {
 	case "/create":
 		if err := createCmd.RunE(createCmd, args); err != nil {

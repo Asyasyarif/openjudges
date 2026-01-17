@@ -1,0 +1,8 @@
+{
+  "judges": [],
+  "options": {
+    "delay_ms": 1000,
+    "jitter_ms": 500,
+    "parallel": 0
+  }
+}

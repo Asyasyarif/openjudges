@@ -52,7 +52,7 @@ var monkeySpinner = spinner.Spinner{
 }
 
 const (
-	maxResponseLines = 10
+	maxResponseLines = 3
 	maxEvalLines     = 5
 )
 
@@ -655,7 +655,6 @@ func (m RunModel) renderRunning() string {
 
 	// HEADER
 	sections = append(sections, components.RenderHeader(boxWidth))
-	sections = append(sections, "")
 
 	// Handle Runner Error
 	if m.RunnerError != nil {
@@ -681,19 +680,9 @@ func (m RunModel) renderRunning() string {
 			loadingMsg = fmt.Sprintf("Judge %s started, loading data...", m.ActiveJudge)
 		}
 
-		loadingView := lipgloss.JoinVertical(lipgloss.Left,
-			"",
-			lipgloss.NewStyle().Foreground(styles.Gray).Render(m.Spinner.View()+" "+loadingMsg),
-			"",
-		)
+		loadingView := lipgloss.NewStyle().Foreground(styles.Gray).Render(m.Spinner.View() + " " + loadingMsg)
 
 		return lipgloss.JoinVertical(lipgloss.Left, sections...) + "\n" + loadingView
-	}
-
-	if !m.Done {
-		warningStyle := lipgloss.NewStyle().Foreground(styles.Yellow).Italic(true)
-		sections = append(sections, warningStyle.Render("Process is running, please do not close the terminal"))
-		sections = append(sections, "")
 	}
 
 	// TREE VIEW SECTION
@@ -721,15 +710,15 @@ func (m RunModel) renderRunning() string {
 
 	if len(state.Results) > 0 {
 		sections = append(sections, t.String())
-		sections = append(sections, "")
 	}
 
-	// QUESTION and EXPECTATION
-	labelStyle := lipgloss.NewStyle().Foreground(styles.Gray)
-	purpleStyle := lipgloss.NewStyle().Foreground(styles.Purple).Bold(true)
-	cyanStyle := lipgloss.NewStyle().Foreground(styles.Cyan)
+	// Add warning only when running and no results yet
+	if !m.Done && len(state.Results) == 0 {
+		warningStyle := lipgloss.NewStyle().Foreground(styles.Yellow).Italic(true)
+		sections = append(sections, warningStyle.Render("Process is running, please do not close the terminal"))
+	}
 
-	// Pre-extract summary to decide if we should hide Question/Expectation
+	// PREPARE EVAL DATA
 	summaryText := ""
 	scoreText := ""
 	if state.EvalBuffer.Len() > 0 {
@@ -759,41 +748,27 @@ func (m RunModel) renderRunning() string {
 		}
 	}
 
-	if summaryText == "" && !m.Done {
-		wrappedPrompt := wrapText(state.CurrentTest.Prompt, boxWidth-11)
-		promptLines := strings.Split(wrappedPrompt, "\n")
-		if len(promptLines) > 3 {
-			promptLines = promptLines[:3]
-			promptLines[2] += "..."
-			wrappedPrompt = strings.Join(promptLines, "\n")
+	if m.RunnerError != nil {
+		// ERROR VIEW
+		errorView := lipgloss.JoinVertical(lipgloss.Left,
+			styles.ErrorTextStyle.Render("Runner Error:"),
+			styles.ErrorTextStyle.Render(m.RunnerError.Error()),
+			"",
+			styles.DimStyle.Render("Press esc to return"),
+		)
+		if m.Width > 0 && m.Height > 0 {
+			centeredError := lipgloss.Place(boxWidth, 10, lipgloss.Center, lipgloss.Center, errorView)
+			sections = append(sections, centeredError)
+		} else {
+			sections = append(sections, errorView)
 		}
-		sections = append(sections, labelStyle.Render("Question: ")+purpleStyle.Render(wrappedPrompt))
-
-		wrappedExpect := wrapText(state.CurrentTest.Expectation, boxWidth-14)
-		sections = append(sections, labelStyle.Render("Expectation: ")+cyanStyle.Render(wrappedExpect))
 		sections = append(sections, "")
+		sections = append(sections, styles.DimStyle.Render("esc: back to menu"))
+		return strings.Join(sections, "\n")
 	}
 
-	if m.RunnerError != nil {
-		// ERROR BOX
-		errorStyle := lipgloss.NewStyle().
-			Width(contentWidth).
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(styles.Red).
-			Padding(1, 2)
-
-		content := lipgloss.JoinVertical(lipgloss.Left,
-			styles.ErrorTextStyle.Render("Execution Error"),
-			"",
-			wrapText(m.RunnerError.Error(), contentWidth-4),
-			"",
-			lipgloss.JoinHorizontal(lipgloss.Top,
-				styles.HighlightStyle.Render("esc"), styles.DimStyle.Render(" back to menu"),
-			),
-		)
-		sections = append(sections, errorStyle.Render(content))
-	} else if m.Done {
-		// COMPLETION BOX
+	if m.Done {
+		// COMPLETION VIEW
 		doneStyle := lipgloss.NewStyle().
 			Align(lipgloss.Left).
 			Padding(1, 0)
@@ -813,11 +788,10 @@ func (m RunModel) renderRunning() string {
 
 		totalSeconds := m.TotalTime.Seconds()
 
-		// Enhanced completion header with checkmark
 		completionHeader := lipgloss.NewStyle().
 			Bold(true).
 			Foreground(styles.Green).
-			Render("✓ EVALUATION COMPLETE")
+			Render("EVALUATION COMPLETE")
 
 		content := lipgloss.JoinVertical(lipgloss.Left,
 			completionHeader,
@@ -831,7 +805,6 @@ func (m RunModel) renderRunning() string {
 			"",
 		)
 
-		// NEW: Add Excel path to completion box
 		for _, j := range m.Judges {
 			if j.ExcelPath != "" {
 				excelLine := fmt.Sprintf("%s %s",
@@ -848,25 +821,9 @@ func (m RunModel) renderRunning() string {
 			),
 		)
 
-		// Enhanced done style with border
-		enhancedDoneStyle := doneStyle.
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(styles.Green).
-			Padding(1, 2)
-
-		sections = append(sections, enhancedDoneStyle.Render(content))
+		sections = append(sections, doneStyle.Render(content))
 	} else {
-		// STREAMING BOX
-		responseStyle := lipgloss.NewStyle().
-			Width(contentWidth).
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(styles.Purple).
-			Padding(0, 1)
-
-		if state.State == StateEvaluating {
-			responseStyle = responseStyle.BorderForeground(styles.Orange)
-		}
-
+		// STREAMING VIEW with TREE LAYOUT
 		usableWidth := contentWidth - 2
 		if usableWidth < 0 {
 			usableWidth = 0
@@ -875,7 +832,6 @@ func (m RunModel) renderRunning() string {
 		// Status Line
 		var statusText string
 		ctaStyle := lipgloss.NewStyle().Foreground(styles.Cyan)
-		statsStyle := lipgloss.NewStyle().Foreground(styles.Gray).Faint(true)
 
 		if state.State == StateGenerating {
 			text := "Generating response..."
@@ -900,18 +856,28 @@ func (m RunModel) renderRunning() string {
 			statusText = fmt.Sprintf("%s %s", m.EvalSpinner.View(), evalText)
 		}
 
-		elapsed := time.Since(m.StartTime).Seconds()
-		statsText := statsStyle.Render(fmt.Sprintf("%.2fs ∞ %d/%d", elapsed, state.Completed+1, state.Total))
+		// Create TREE VIEW for Question and Streaming Answer
+		questionTree := tree.New()
 
-		statusWidth := lipgloss.Width(statusText)
-		statsWidth := lipgloss.Width(statsText)
-		spaceWidth := usableWidth - statusWidth - statsWidth
-		if spaceWidth < 0 {
-			spaceWidth = 0
+		// Format the question/status for tree root
+		var rootLabel string
+		if summaryText == "" && state.CurrentTest != nil {
+			// Truncate question for display
+			questionText := state.CurrentTest.Prompt
+			if len(questionText) > 50 {
+				questionText = questionText[:47] + "..."
+			}
+			rootLabel = statusText + " | " + questionText
+		} else {
+			rootLabel = statusText
 		}
-		boxHeader := statusText + strings.Repeat(" ", spaceWidth) + statsText
 
-		// Main Stream (Response)
+		questionTree.Root(lipgloss.NewStyle().
+			Foreground(styles.Purple).
+			Bold(true).
+			Render(rootLabel))
+
+		// Response streaming as first child
 		wrappedResponse := wrapText(state.StreamBuffer.String(), usableWidth)
 		respLines := strings.Split(wrappedResponse, "\n")
 		if len(respLines) > maxResponseLines {
@@ -920,27 +886,25 @@ func (m RunModel) renderRunning() string {
 		for len(respLines) < maxResponseLines {
 			respLines = append(respLines, "")
 		}
+		questionTree.Child(strings.Join(respLines, "\n"))
 
-		// Eval Stream
-		evalView := ""
+		// Add LIVE ANALYSIS as child tree if evaluating
 		if state.State == StateEvaluating || state.EvalBuffer.Len() > 0 {
 			evalText := state.EvalBuffer.String()
 
-			// Use pre-extracted score and summary
 			liveScore := ""
 			if scoreText != "" {
 				liveScore = lipgloss.NewStyle().
 					Foreground(styles.Green).
 					Bold(true).
-					Render("  " + scoreText + " / 10")
+					Render("Score: " + scoreText + "/100")
 			}
 
 			liveSummary := ""
 			if summaryText != "" {
-				liveSummary = "\n" + lipgloss.NewStyle().
-					Italic(true).
+				liveSummary = lipgloss.NewStyle().
 					Foreground(styles.Cyan).
-					Render("  Summary: "+summaryText)
+					Render("Summary: " + summaryText)
 			}
 
 			coloredJSON := colorizeJSON(evalText, usableWidth)
@@ -953,33 +917,38 @@ func (m RunModel) renderRunning() string {
 				evalLines = append(evalLines, "")
 			}
 
-			analysisHeader := lipgloss.NewStyle().
-				Foreground(styles.Orange).
-				Bold(true).
-				Render("  LIVE ANALYSIS") + liveScore
+			// Create LIVE ANALYSIS as subtree child
+			analysisTree := tree.New().
+				Root(lipgloss.NewStyle().
+					Foreground(styles.Orange).
+					Bold(true).
+					Render("LIVE ANALYSIS"))
 
-			rawLabel := lipgloss.NewStyle().
+			if liveScore != "" {
+				analysisTree.Child(liveScore)
+			}
+			if liveSummary != "" {
+				analysisTree.Child(liveSummary)
+			}
+			analysisTree.Child(lipgloss.NewStyle().
 				Foreground(styles.Gray).
 				Faint(true).
-				Render("  RAW DATA STREAM")
+				Render("RAW DATA STREAM"))
+			analysisTree.Child(strings.Join(evalLines, "\n"))
 
-			contentLines := []string{analysisHeader}
-			if liveSummary != "" {
-				contentLines = append(contentLines, liveSummary)
-			}
-			contentLines = append(contentLines, "", rawLabel, strings.Join(evalLines, "\n"))
-
-			evalView = "\n" + lipgloss.NewStyle().
-				PaddingTop(1).
-				Width(usableWidth).
-				Border(lipgloss.NormalBorder(), true, false, false, false).
-				BorderForeground(styles.DarkGray).
-				Render(lipgloss.JoinVertical(lipgloss.Left, contentLines...))
+			// Add as child of main tree
+			questionTree.Child(analysisTree.String())
 		}
 
-		boxContent := boxHeader + "\n\n" + strings.Join(respLines, "\n") + evalView
-		sections = append(sections, responseStyle.Render(boxContent))
+		// Add gap between completed results and current running test
+		if len(state.Results) > 0 {
+			sections = append(sections, "")
+		}
+
+		sections = append(sections, questionTree.String())
 	}
+
+	// Add gap before footer
 	sections = append(sections, "")
 
 	// FOOTER - LINE 1: Judge info & Tests

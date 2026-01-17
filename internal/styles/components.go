@@ -58,8 +58,8 @@ var (
 			Padding(0, 1).
 			Bold(true)
 
-	// DocStyle is the default document style with margins
-	DocStyle = lipgloss.NewStyle().Margin(1, 2).Align(lipgloss.Left)
+	// DocStyle is the default document style with minimal margins
+	DocStyle = lipgloss.NewStyle().Margin(0, 1).Align(lipgloss.Left)
 
 	// HighlightStyle is for command highlights (e.g. /run)
 	HighlightStyle = lipgloss.NewStyle().
@@ -127,33 +127,25 @@ var (
 	BadgePassStyle = lipgloss.NewStyle().
 			Foreground(Green).
 			Bold(true).
-			Padding(0, 1).
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(Green)
+			Padding(0, 1)
 
 	// BadgeFailStyle is for fail badges
 	BadgeFailStyle = lipgloss.NewStyle().
 			Foreground(Red).
 			Bold(true).
-			Padding(0, 1).
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(Red)
+			Padding(0, 1)
 
 	// BadgeRunningStyle is for running/in-progress badges
 	BadgeRunningStyle = lipgloss.NewStyle().
 				Foreground(Yellow).
 				Bold(true).
-				Padding(0, 1).
-				Border(lipgloss.RoundedBorder()).
-				BorderForeground(Yellow)
+				Padding(0, 1)
 
 	// BadgePendingStyle is for pending badges
 	BadgePendingStyle = lipgloss.NewStyle().
 				Foreground(Gray).
 				Bold(true).
-				Padding(0, 1).
-				Border(lipgloss.RoundedBorder()).
-				BorderForeground(Gray)
+				Padding(0, 1)
 )
 
 // List Styles
