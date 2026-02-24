@@ -9,9 +9,14 @@ import (
 )
 
 // View renders the UI
+// View renders the UI
 func (m Model) View() string {
 	if m.Quitting {
 		return ""
+	}
+
+	if m.Mode == ModeInitializing {
+		return m.renderInitializing()
 	}
 
 	header := m.renderHeader()
@@ -56,13 +61,14 @@ func (m Model) renderInputBox() string {
 		w = 80
 	}
 
-	inputWidth := w - 4 // -2 for borders, -2 for DocStyle padding
+	inputWidth := w - 6
 	if inputWidth < 0 {
 		inputWidth = 0
 	}
 
+	// Input with border
 	return lipgloss.NewStyle().
-		Border(lipgloss.NormalBorder()).
+		Border(lipgloss.RoundedBorder()).
 		BorderForeground(styles.Purple).
 		Padding(0, 1).
 		Width(inputWidth).
@@ -86,9 +92,30 @@ func (m Model) renderSuggestions() string {
 		if i == m.Selected {
 			line = styles.SelectedItemStyle.Render(fmt.Sprintf("▶ %-10s  %s", name, desc))
 		} else {
-			line = styles.UnselectedItemStyle.Render(fmt.Sprintf("  %-10s  %s", name, desc))
+			line = fmt.Sprintf("  %-10s  %s", name, desc)
 		}
 		lines = append(lines, line)
 	}
+
 	return lipgloss.JoinVertical(lipgloss.Left, lines...)
+}
+
+// renderInitializing shows the initialization progress
+func (m Model) renderInitializing() string {
+	header := components.RenderHeader(m.Width)
+
+	var lines []string
+	lines = append(lines, header)
+	lines = append(lines, "")
+
+	for _, msg := range m.InitMessages {
+		lines = append(lines, msg)
+	}
+
+	if !m.InitComplete {
+		lines = append(lines, "")
+		lines = append(lines, styles.DimStyle.Render("Initializing..."))
+	}
+
+	return styles.DocStyle.Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
 }

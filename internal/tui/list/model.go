@@ -62,11 +62,8 @@ func NewModel(cfg *config.Config, configPath string) Model {
 	// Create list delegate
 	delegate := list.NewDefaultDelegate()
 
-	// Customize delegate styles for a "fancy" look
+	// Simple list styles without border boxes
 	delegate.Styles.SelectedTitle = lipgloss.NewStyle().
-		Border(lipgloss.NormalBorder(), false, false, false, true).
-		BorderLeft(true).
-		BorderForeground(styles.Purple).
 		Foreground(styles.Purple).
 		Bold(true).
 		Padding(0, 0, 0, 1)

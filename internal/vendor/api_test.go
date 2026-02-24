@@ -1,6 +1,7 @@
 package vendor
 
 import (
+	"errors"
 	"io"
 	"strings"
 	"testing"
@@ -72,5 +73,26 @@ data: {"content": "End."}`
 	expected := "Here is response. End."
 	if result != expected {
 		t.Errorf("expected %q, got %q", expected, result)
+	}
+}
+
+func TestShouldRetryByStatusCode(t *testing.T) {
+	if !shouldRetry(nil, 429) {
+		t.Fatalf("expected retry for HTTP 429")
+	}
+
+	if !shouldRetry(nil, 503) {
+		t.Fatalf("expected retry for HTTP 503")
+	}
+
+	if shouldRetry(nil, 400) {
+		t.Fatalf("did not expect retry for HTTP 400")
+	}
+}
+
+func TestShouldRetryByErrorText(t *testing.T) {
+	err := errors.New("stream reading error: stream error: stream ID 63; INTERNAL_ERROR; received from peer")
+	if !shouldRetry(err, 200) {
+		t.Fatalf("expected retry for stream internal error")
 	}
 }
