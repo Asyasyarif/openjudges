@@ -266,7 +266,10 @@ IMPORTANT: The "overall_score" MUST be between 0 and 100. If the quality is 9/10
   },
   "body": {},
   "parse_as": "",
-  "guardrail": []
+  "guardrail": [],
+  "timeout_ms": 60000,
+  "max_retries": 2,
+  "backoff_ms": 500
 }`
 		os.WriteFile("vendors/example-vendor-get.json", []byte(sampleGet), 0644)
 		if verbose {
@@ -291,7 +294,10 @@ IMPORTANT: The "overall_score" MUST be between 0 and 100. If the quality is 9/10
     "temperature": 0.7
   },
   "parse_as": "choices.0.delta.content",
-  "guardrail": []
+  "guardrail": [],
+  "timeout_ms": 60000,
+  "max_retries": 2,
+  "backoff_ms": 500
 }`
 		os.WriteFile("vendors/example-vendor-post.json", []byte(samplePost), 0644)
 		if verbose {

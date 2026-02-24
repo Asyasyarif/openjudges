@@ -5,8 +5,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"openjudges/testcase"
@@ -14,6 +16,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var placeholderRegex = regexp.MustCompile(`\{\{(.*?)\}\}`)
@@ -45,58 +48,194 @@ func (v *VendorConfig) CallVendorAPI(ctx context.Context, tc testcase.TestCase) 
 	}
 
 	// Prepare request body for POST/PUT
-	var bodyReader io.Reader
+	var bodyBytes []byte
 	if method == "POST" || method == "PUT" {
-		bodyBytes, err := v.prepareBody(data)
+		preparedBody, err := v.prepareBody(data)
 		if err != nil {
 			return "", fmt.Errorf("failed to prepare request body: %w", err)
 		}
-		bodyReader = bytes.NewBuffer(bodyBytes)
+		bodyBytes = preparedBody
 	}
 
-	// Create HTTP request with context
-	req, err := http.NewRequestWithContext(ctx, method, targetURL, bodyReader)
-	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
+	timeout := time.Duration(v.TimeoutMs) * time.Millisecond
+	if timeout <= 0 {
+		timeout = 60 * time.Second
 	}
 
-	// Set headers with placeholder substitution
-	for key, val := range v.Headers {
-		val = v.replacePlaceholders(val, data, "header")
-		req.Header.Set(key, val)
+	maxRetries := v.MaxRetries
+	if maxRetries < 0 {
+		maxRetries = 0
 	}
 
-	// Execute request
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("vendor API request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	// Extract response
-	if v.ParseAs != "" {
-		// Handle streaming/SSE response
-		return v.extractStreamResponse(resp.Body)
+	baseBackoff := time.Duration(v.BackoffMs) * time.Millisecond
+	if baseBackoff <= 0 {
+		baseBackoff = 500 * time.Millisecond
 	}
 
-	// Read full response body (non-streaming)
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("failed to read response: %w", err)
-	}
+	client := &http.Client{Timeout: timeout}
 
-	// Check for HTTP errors
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		msg := string(respBody)
-		if msg == "" {
-			msg = "(empty response body)"
+	var lastErr error
+	for attempt := 0; attempt <= maxRetries; attempt++ {
+		var bodyReader io.Reader
+		if len(bodyBytes) > 0 {
+			bodyReader = bytes.NewReader(bodyBytes)
 		}
-		return "", fmt.Errorf("vendor API error (status %d): %s", resp.StatusCode, msg)
+
+		// Create HTTP request with context
+		req, err := http.NewRequestWithContext(ctx, method, targetURL, bodyReader)
+		if err != nil {
+			return "", fmt.Errorf("failed to create request: %w", err)
+		}
+
+		// Set headers with placeholder substitution
+		for key, val := range v.Headers {
+			val = v.replacePlaceholders(val, data, "header")
+			req.Header.Set(key, val)
+		}
+
+		// Execute request
+		resp, err := client.Do(req)
+		if err != nil {
+			lastErr = fmt.Errorf("vendor API request failed: %w", err)
+			if shouldRetry(err, 0) && attempt < maxRetries && ctx.Err() == nil {
+				if !sleepWithBackoff(ctx, attempt, baseBackoff) {
+					break
+				}
+				continue
+			}
+			return "", lastErr
+		}
+
+		if v.ParseAs != "" {
+			if shouldRetry(nil, resp.StatusCode) {
+				respBody, readErr := io.ReadAll(resp.Body)
+				resp.Body.Close()
+				if readErr == nil {
+					lastErr = fmt.Errorf("vendor API error (status %d): %s", resp.StatusCode, string(respBody))
+				} else {
+					lastErr = fmt.Errorf("vendor API error (status %d)", resp.StatusCode)
+				}
+				if attempt < maxRetries && ctx.Err() == nil {
+					if !sleepWithBackoff(ctx, attempt, baseBackoff) {
+						break
+					}
+					continue
+				}
+				return "", lastErr
+			}
+
+			result, streamErr := v.extractStreamResponse(resp.Body)
+			resp.Body.Close()
+			if streamErr != nil {
+				lastErr = streamErr
+				if shouldRetry(streamErr, resp.StatusCode) && attempt < maxRetries && ctx.Err() == nil {
+					if !sleepWithBackoff(ctx, attempt, baseBackoff) {
+						break
+					}
+					continue
+				}
+				return "", streamErr
+			}
+
+			return result, nil
+		}
+
+		// Read full response body (non-streaming)
+		respBody, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			lastErr = fmt.Errorf("failed to read response: %w", err)
+			if shouldRetry(err, resp.StatusCode) && attempt < maxRetries && ctx.Err() == nil {
+				if !sleepWithBackoff(ctx, attempt, baseBackoff) {
+					break
+				}
+				continue
+			}
+			return "", lastErr
+		}
+
+		// Check for HTTP errors
+		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+			msg := string(respBody)
+			if msg == "" {
+				msg = "(empty response body)"
+			}
+			lastErr = fmt.Errorf("vendor API error (status %d): %s", resp.StatusCode, msg)
+			if shouldRetry(nil, resp.StatusCode) && attempt < maxRetries && ctx.Err() == nil {
+				if !sleepWithBackoff(ctx, attempt, baseBackoff) {
+					break
+				}
+				continue
+			}
+			return "", lastErr
+		}
+
+		// Extract response using response_path
+		return v.extractResponse(respBody)
 	}
 
-	// Extract response using response_path
-	return v.extractResponse(respBody)
+	if lastErr != nil {
+		return "", lastErr
+	}
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return "", ctxErr
+	}
+	return "", fmt.Errorf("vendor API request failed")
+}
+
+func shouldRetry(err error, statusCode int) bool {
+	if statusCode != 0 {
+		switch statusCode {
+		case http.StatusRequestTimeout,
+			http.StatusTooEarly,
+			http.StatusTooManyRequests,
+			http.StatusBadGateway,
+			http.StatusServiceUnavailable,
+			http.StatusGatewayTimeout:
+			return true
+		}
+		if statusCode >= 500 {
+			return true
+		}
+	}
+
+	if err == nil {
+		return false
+	}
+
+	if errors.Is(err, context.DeadlineExceeded) {
+		return true
+	}
+
+	var netErr net.Error
+	if errors.As(err, &netErr) {
+		return netErr.Timeout() || netErr.Temporary()
+	}
+
+	errText := strings.ToLower(err.Error())
+	if strings.Contains(errText, "stream error") ||
+		strings.Contains(errText, "internal_error") ||
+		strings.Contains(errText, "received from peer") ||
+		strings.Contains(errText, "unexpected eof") ||
+		strings.Contains(errText, "connection reset") ||
+		strings.Contains(errText, "broken pipe") {
+		return true
+	}
+
+	return false
+}
+
+func sleepWithBackoff(ctx context.Context, attempt int, baseDelay time.Duration) bool {
+	delay := baseDelay * time.Duration(1<<attempt)
+	timer := time.NewTimer(delay)
+	defer timer.Stop()
+
+	select {
+	case <-ctx.Done():
+		return false
+	case <-timer.C:
+		return true
+	}
 }
 
 // extractStreamResponse reads SSE/line-delimited JSON stream and aggregates content

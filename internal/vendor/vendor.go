@@ -11,6 +11,9 @@ type VendorConfig struct {
 	APIKey       string                 `json:"api_key"`
 	ParseAs      string                 `json:"parse_as"`  // Optional: regex or JSON path for streaming chunks
 	Guardrail    []string               `json:"guardrail"` // Optional: strings to skip/filter out from stream
+	TimeoutMs    int                    `json:"timeout_ms,omitempty"`
+	MaxRetries   int                    `json:"max_retries,omitempty"`
+	BackoffMs    int                    `json:"backoff_ms,omitempty"`
 
 	// Filename stores the source JSON filename (not serialized to JSON)
 	Filename string `json:"-"`
